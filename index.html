@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocket Casino - Ultimate</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #f59e0b;
+            --vip-gold: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            background: var(--bg-panel);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            z-index: 10;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .balance-container {
+            background: #0f172a;
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            border: 1px solid #334155;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .balance-amount {
+            color: var(--success);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .game-stage {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .multiplier-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            z-index: 2;
+        }
+
+        .multiplier-display.crashed {
+            color: var(--danger);
+        }
+
+        .status-message {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2;
+        }
+
+        .luck-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid var(--vip-gold);
+            color: var(--vip-gold);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            display: none;
+            z-index: 5;
+        }
+
+        .controls-area {
+            background: var(--bg-panel);
+            padding: 1.5rem;
+            border-top: 1px solid #334155;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .bet-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input[type="number"], input[type="text"] {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-primary:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .btn-cashout {
+            background: var(--accent);
+            color: #0f172a;
+            display: none;
+        }
+
+        .promo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-left: 1px solid #334155;
+            padding-left: 1rem;
+        }
+
+        .promo-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-promo {
+            background: #334155;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-panel);
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            transform: translateX(200%);
+            transition: transform 0.3s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        .toast.vip {
+            border-left-color: var(--vip-gold);
+        }
+
+        @media (max-width: 768px) {
+            .controls-area {
+                grid-template-columns: 1fr;
+            }
+            .promo-section {
+                border-left: none;
+                border-top: 1px solid #334155;
+                padding-left: 0;
+                padding-top: 1rem;
+            }
+            .multiplier-display {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" id="logoElement">🚀 ROCKET BET</div>
+        <div class="balance-container">
+            <span>Баланс:</span>
+            <span class="balance-amount" id="balanceDisplay">$100.00</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="game-stage">
+            <canvas id="gameCanvas"></canvas>
+            <div class="status-message" id="statusMessage">Ожидание ставки...</div>
+            <div class="multiplier-display" id="multiplierDisplay">1.00x</div>
+            <div class="luck-indicator" id="luckIndicator">🍀 УДАЧА x2</div>
+        </div>
+
+        <div class="controls-area">
+            <div class="bet-panel">
+                <label style="color: var(--text-muted); font-size: 0.875rem;">Сумма ставки</label>
+                <div class="input-group">
+                    <input type="number" id="betInput" value="10" min="1">
+                    <button class="btn btn-primary" id="betButton">Ставка</button>
+                    <button class="btn btn-cashout" id="cashoutButton">Забрать</button>
+                </div>
+            </div>
+
+            <div class="promo-section">
+                <label style="color: var(--text-muted); font-size: 0.875rem;">Промокод</label>
+                <div class="promo-input-group">
+                    <input type="text" id="promoInput" placeholder="Введите код">
+                    <button class="btn btn-promo" id="promoButton">Применить</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast">
+        <span id="toastMessage">Успешно!</span>
+    </div>
+
+    <script>
+        // Game State
+        let balance = 100.00;
+        let currentBet = 0;
+        let isPlaying = false;
+        let isCrashed = false;
+        let multiplier = 1.00;
+        let crashPoint = 0;
+        let animationId;
+        let startTime;
+        
+        const usedCodes = new Set();
+        let luckMultiplier = 1.0;
+
+        // DOM Elements
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const betInput = document.getElementById('betInput');
+        const betButton = document.getElementById('betButton');
+        const cashoutButton = document.getElementById('cashoutButton');
+        const multiplierDisplay = document.getElementById('multiplierDisplay');
+        const statusMessage = document.getElementById('statusMessage');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const promoInput = document.getElementById('promoInput');
+        const promoButton = document.getElementById('promoButton');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const luckIndicator = document.getElementById('luckIndicator');
+        const logoElement = document.getElementById('logoElement');
+
+        // Canvas Setup
+        let width, height;
+        function resizeCanvas() {
+            width = canvas.width = canvas.parentElement.offsetWidth;
+            height = canvas.height = canvas.parentElement.offsetHeight;
+            drawIdle(); // Redraw when resized
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function updateBalance(amount) {
+            balance += amount;
+            balanceDisplay.textContent = `$${balance.toFixed(2)}`;
+        }
+
+        function showToast(msg, type = 'success') {
+            toastMessage.textContent = msg;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function generateCrashPoint() {
+            if (Math.random() < 0.03) return 1.00;
+            const e = 2 ** 32;
+            const h = crypto.getRandomValues(new Uint32Array(1))[0];
+            return Math.max(1.00, Math.floor((100 * e - h) / (e - h)) / 100);
+        }
+
+        // Draw Functions
+        function drawIdle() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            
+            for (let x = 0; x < width; x += 100) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += 100) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#334155';
+            ctx.font = "20px Inter";
+            ctx.textAlign = "center";
+            ctx.fillText("Сделайте ставку, чтобы начать", width/2, height/2);
+        }
+
+        function drawRocket(x, y, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            
+            ctx.fillStyle = luckMultiplier > 1 ? '#fbbf24' : '#f59e0b';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 20, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(-15, 0);
+            ctx.lineTo(-25, -10);
+            ctx.lineTo(-25, 10);
+            ctx.fill();
+
+            if (!isCrashed && isPlaying) {
+                ctx.fillStyle = luckMultiplier > 1 ? '#3b82f6' : '#f97316';
+                ctx.beginPath();
+                ctx.moveTo(-20, 0);
+                ctx.lineTo(-35 - Math.random() * 10, -5);
+                ctx.lineTo(-35 - Math.random() * 10, 5);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawCurve(progress) {
+            ctx.strokeStyle = luckMultiplier > 1 ? '#fbbf24' : '#3b82f6';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            
+            const endX = Math.min(width * 0.8, 100 + progress * 50);
+            const endY = height - Math.min(height * 0.8, 100 + progress * 30);
+            
+            ctx.quadraticCurveTo(endX / 2, height, endX, endY);
+            ctx.stroke();
+        }
+
+        function drawExplosion(x, y) {
+            ctx.fillStyle = '#ef4444';
+            for(let i = 0; i < 30; i++) {
+                ctx.beginPath();
+                ctx.arc(
+                    x + (Math.random() * 60 - 30), 
+                    y + (Math.random() * 60 - 30), 
+                    Math.random() * 8, 
+                    0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+
+        // Game Loop
+        function gameLoop(timestamp) {
+            if (!isPlaying) return;
+
+            const elapsed = (timestamp - startTime) / 1000;
+            const baseGrowth = (0.1 * elapsed) + (0.05 * Math.pow(elapsed, 2));
+            multiplier = 1.00 + (baseGrowth * luckMultiplier);
+            
+            multiplierDisplay.textContent = `${multiplier.toFixed(2)}x`;
+
+            if (multiplier >= crashPoint) {
+                crashGame();
+                return;
+            }
+
+            ctx.clearRect(0, 0, width, height);
+            
+            // Grid
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            const offset = (elapsed * 50) % 100;
+            for (let x = -offset; x < width; x += 100) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += 100) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            
+            const rocketX = Math.min(width * 0.8, 100 + elapsed * 60);
+            const rocketY = height - Math.min(height * 0.8, 100 + elapsed * 40);
+            const angle = Math.atan2(40, 60);
+            
+            drawCurve(elapsed);
+            drawRocket(rocketX, rocketY, -angle);
+
+            cashoutButton.textContent = `Забрать $${(currentBet * multiplier).toFixed(2)}`;
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            const betAmount = parseFloat(betInput.value);
+            
+            if (isNaN(betAmount) || betAmount <= 0) {
+                showToast("Неверная сумма ставки", "error");
+                return;
+            }
+            if (betAmount > balance) {
+                showToast("Недостаточно средств", "error");
+                return;
+            }
+
+            updateBalance(-betAmount);
+            currentBet = betAmount;
+            isPlaying = true;
+            isCrashed = false;
+            multiplier = 1.00;
+            crashPoint = generateCrashPoint();
+            startTime = performance.now();
+
+            betButton.style.display = 'none';
+            cashoutButton.style.display = 'block';
+            betInput.disabled = true;
+            multiplierDisplay.classList.remove('crashed');
+            statusMessage.style.opacity = '0';
+            promoInput.disabled = true;
+            promoButton.disabled = true;
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function cashOut() {
+            if (!isPlaying || isCrashed) return;
+
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            
+            const winAmount = currentBet * multiplier;
+            updateBalance(winAmount);
+            
+            statusMessage.textContent = `Вы выиграли $${winAmount.toFixed(2)}!`;
+            statusMessage.style.color = 'var(--success)';
+            statusMessage.style.opacity = '1';
+            
+            endGameUI();
+            showToast(`Победа! +$${winAmount.toFixed(2)}`);
+        }
+
+        function crashGame() {
+            isPlaying = false;
+            isCrashed = true;
+            cancelAnimationFrame(animationId);
+            
+            multiplierDisplay.textContent = `${crashPoint.toFixed(2)}x`;
+            multiplierDisplay.classList.add('crashed');
+            
+            statusMessage.textContent = "Ракета улетела!";
+            statusMessage.style.color = 'var(--danger)';
+            statusMessage.style.opacity = '1';
+
+            const rocketX = Math.min(width * 0.8, 100 + 1000);
+            const rocketY = height - Math.min(height * 0.8, 100 + 800);
+            drawExplosion(rocketX, rocketY);
+
+            endGameUI();
+            showToast("Вы проиграли ставку", "error");
+        }
+
+        function endGameUI() {
+            betButton.style.display = 'block';
+            cashoutButton.style.display = 'none';
+            betInput.disabled = false;
+            promoInput.disabled = false;
+            promoButton.disabled = false;
+            betButton.textContent = "Ставка";
+            resetLuck();
+        }
+
+        function resetLuck() {
+            if (luckMultiplier > 1) {
+                luckMultiplier = 1.0;
+                luckIndicator.style.display = 'none';
+                document.documentElement.style.setProperty('--primary', '#3b82f6');
+                logoElement.style.color = '#3b82f6';
+            }
+        }
+
+        // Event Listeners
+        betButton.addEventListener('click', startGame);
+        cashoutButton.addEventListener('click', cashOut);
+
+        promoButton.addEventListener('click', () => {
+            const code = promoInput.value.trim().toUpperCase();
+            
+            if (usedCodes.has(code)) {
+                showToast("Код уже использован", "error");
+                return;
+            }
+
+            if (code === 'ВЫИГРЫШ10') {
+                updateBalance(1000);
+                luckMultiplier = 2.0;
+                usedCodes.add(code);
+                promoInput.value = '';
+                luckIndicator.style.display = 'block';
+                document.documentElement.style.setProperty('--primary', '#fbbf24');
+                logoElement.style.color = '#fbbf24';
+                showToast("🎉 ВИП БОНУС: +$1000 и УДАЧА x2!", "vip");
+            } else if (code === 'DEP') {
+                updateBalance(10);
+                usedCodes.add(code);
+                promoInput.value = '';
+                showToast("+ $10");
+            } else if (code === 'ИГРА10') {
+                updateBalance(100);
+                usedCodes.add(code);
+                promoInput.value = '';
+                showToast("+ $100");
+            } else {
+                showToast("Неверный код", "error");
+            }
+        });
+
+        // Initial Draw
+        drawIdle();
+    </script>
+</body>
+</html>
