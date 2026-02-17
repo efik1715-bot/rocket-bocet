@@ -30,10 +30,10 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         header {
@@ -44,6 +44,8 @@
             align-items: center;
             border-bottom: 1px solid #334155;
             z-index: 10;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .logo {
@@ -53,6 +55,13 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .balance-container {
@@ -70,6 +79,18 @@
             color: var(--success);
         }
 
+        .save-indicator {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .save-indicator.saved {
+            color: var(--success);
+        }
+
         main {
             flex: 1;
             display: flex;
@@ -82,6 +103,7 @@
             position: relative;
             background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
             overflow: hidden;
+            min-height: 400px;
         }
 
         canvas {
@@ -219,6 +241,73 @@
             white-space: nowrap;
         }
 
+        /* Save System Panel */
+        .save-panel {
+            background: var(--bg-panel);
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            z-index: 10;
+        }
+
+        .btn-save {
+            background: #059669;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-save:hover {
+            background: #047857;
+        }
+
+        .btn-load {
+            background: #7c3aed;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-load:hover {
+            background: #6d28d9;
+        }
+
+        .btn-export {
+            background: #0891b2;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-export:hover {
+            background: #0e7490;
+        }
+
+        .btn-import {
+            background: #dc2626;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-import:hover {
+            background: #b91c1c;
+        }
+
+        .btn-reset {
+            background: #475569;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-reset:hover {
+            background: #334155;
+        }
+
         .toast {
             position: fixed;
             top: 20px;
@@ -248,6 +337,62 @@
             border-left-color: var(--vip-gold);
         }
 
+        .toast.save {
+            border-left-color: #059669;
+        }
+
+        /* Import Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-panel);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid #334155;
+        }
+
+        .modal h3 {
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .modal textarea {
+            width: 100%;
+            height: 150px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
         @media (max-width: 768px) {
             .controls-area {
                 grid-template-columns: 1fr;
@@ -261,6 +406,16 @@
             .multiplier-display {
                 font-size: 3rem;
             }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .save-panel {
+                flex-direction: column;
+            }
+            .save-panel .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -268,9 +423,15 @@
 
     <header>
         <div class="logo" id="logoElement">🚀 ROCKET BET</div>
-        <div class="balance-container">
-            <span>Баланс:</span>
-            <span class="balance-amount" id="balanceDisplay">$100.00</span>
+        <div class="header-right">
+            <div class="balance-container">
+                <span>Баланс:</span>
+                <span class="balance-amount" id="balanceDisplay">$100.00</span>
+            </div>
+            <div class="save-indicator" id="saveIndicator">
+                <span>💾</span>
+                <span id="saveStatus">Автосохранение</span>
+            </div>
         </div>
     </header>
 
@@ -300,14 +461,182 @@
                 </div>
             </div>
         </div>
+
+        <div class="save-panel">
+            <button class="btn btn-save" id="saveButton">💾 Сохранить</button>
+            <button class="btn btn-load" id="loadButton">📂 Загрузить</button>
+            <button class="btn btn-export" id="exportButton">📤 Экспорт</button>
+            <button class="btn btn-import" id="importButton">📥 Импорт</button>
+            <button class="btn btn-reset" id="resetButton">🗑️ Сброс</button>
+        </div>
     </main>
 
     <div class="toast" id="toast">
         <span id="toastMessage">Успешно!</span>
     </div>
 
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h3>📥 Импорт сохранения</h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.875rem;">
+                Вставьте код сохранения, который вы получили при экспорте:
+            </p>
+            <textarea id="importData" placeholder="Вставьте код сохранения здесь..."></textarea>
+            <div class="modal-buttons">
+                <button class="btn btn-reset" id="cancelImport">Отмена</button>
+                <button class="btn btn-load" id="confirmImport">Импортировать</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Game State
+        // ==================== SAVE SYSTEM ====================
+        const SAVE_KEY = 'rocket_casino_save_v1';
+        
+        function getSaveData() {
+            return {
+                balance: balance,
+                usedCodes: Array.from(usedCodes),
+                luckMultiplier: luckMultiplier,
+                savedAt: new Date().toISOString()
+            };
+        }
+
+        function saveGame(showToast = true) {
+            try {
+                const saveData = getSaveData();
+                localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+                
+                // Visual feedback
+                const saveIndicator = document.getElementById('saveIndicator');
+                const saveStatus = document.getElementById('saveStatus');
+                saveIndicator.classList.add('saved');
+                saveStatus.textContent = 'Сохранено!';
+                
+                setTimeout(() => {
+                    saveIndicator.classList.remove('saved');
+                    saveStatus.textContent = 'Автосохранение';
+                }, 2000);
+
+                if (showToast) {
+                    showToastMessage('Прогресс сохранён!', 'save');
+                }
+            } catch (e) {
+                console.error('Save error:', e);
+                if (showToast) {
+                    showToastMessage('Ошибка сохранения!', 'error');
+                }
+            }
+        }
+
+        function loadGame() {
+            try {
+                const saved = localStorage.getItem(SAVE_KEY);
+                if (!saved) {
+                    showToastMessage('Нет сохранённых данных', 'error');
+                    return false;
+                }
+
+                const data = JSON.parse(saved);
+                
+                // Restore data
+                balance = data.balance || 100;
+                usedCodes = new Set(data.usedCodes || []);
+                luckMultiplier = data.luckMultiplier || 1.0;
+
+                // Update UI
+                updateBalance(0);
+                
+                // Restore luck indicator if active
+                if (luckMultiplier > 1) {
+                    luckIndicator.style.display = 'block';
+                    document.documentElement.style.setProperty('--primary', '#fbbf24');
+                    logoElement.style.color = '#fbbf24';
+                }
+
+                showToastMessage('Прогресс загружен!', 'save');
+                return true;
+            } catch (e) {
+                console.error('Load error:', e);
+                showToastMessage('Ошибка загрузки!', 'error');
+                return false;
+            }
+        }
+
+        function exportSave() {
+            try {
+                const saveData = getSaveData();
+                const encoded = btoa(JSON.stringify(saveData));
+                
+                // Copy to clipboard
+                navigator.clipboard.writeText(encoded).then(() => {
+                    showToastMessage('Код скопирован в буфер!', 'save');
+                }).catch(() => {
+                    // Fallback: show in prompt
+                    prompt('Скопируйте этот код сохранения:', encoded);
+                });
+            } catch (e) {
+                showToastMessage('Ошибка экспорта!', 'error');
+            }
+        }
+
+        function importSave(encodedData) {
+            try {
+                const decoded = atob(encodedData);
+                const data = JSON.parse(decoded);
+                
+                // Validate data
+                if (!data.balance || !data.usedCodes) {
+                    throw new Error('Invalid save data');
+                }
+
+                // Apply data
+                balance = data.balance;
+                usedCodes = new Set(data.usedCodes);
+                luckMultiplier = data.luckMultiplier || 1.0;
+
+                // Update UI
+                updateBalance(0);
+                
+                if (luckMultiplier > 1) {
+                    luckIndicator.style.display = 'block';
+                    document.documentElement.style.setProperty('--primary', '#fbbf24');
+                    logoElement.style.color = '#fbbf24';
+                }
+
+                // Auto-save after import
+                saveGame(false);
+                
+                showToastMessage('Прогресс импортирован!', 'save');
+                return true;
+            } catch (e) {
+                console.error('Import error:', e);
+                showToastMessage('Неверный код сохранения!', 'error');
+                return false;
+            }
+        }
+
+        function resetGame() {
+            if (confirm('Вы уверены? Весь прогресс будет удалён!')) {
+                localStorage.removeItem(SAVE_KEY);
+                balance = 100;
+                usedCodes = new Set();
+                luckMultiplier = 1.0;
+                updateBalance(0);
+                luckIndicator.style.display = 'none';
+                document.documentElement.style.setProperty('--primary', '#3b82f6');
+                logoElement.style.color = '#3b82f6';
+                showToastMessage('Прогресс сброшен!', 'save');
+            }
+        }
+
+        // Auto-save on important events
+        function autoSave() {
+            saveGame(false);
+        }
+
+        // ==================== GAME CODE ====================
         let balance = 100.00;
         let currentBet = 0;
         let isPlaying = false;
@@ -317,7 +646,7 @@
         let animationId;
         let startTime;
         
-        const usedCodes = new Set();
+        let usedCodes = new Set();
         let luckMultiplier = 1.0;
 
         // DOM Elements
@@ -336,12 +665,23 @@
         const luckIndicator = document.getElementById('luckIndicator');
         const logoElement = document.getElementById('logoElement');
 
+        // Save System Buttons
+        const saveButton = document.getElementById('saveButton');
+        const loadButton = document.getElementById('loadButton');
+        const exportButton = document.getElementById('exportButton');
+        const importButton = document.getElementById('importButton');
+        const resetButton = document.getElementById('resetButton');
+        const importModal = document.getElementById('importModal');
+        const importData = document.getElementById('importData');
+        const cancelImport = document.getElementById('cancelImport');
+        const confirmImport = document.getElementById('confirmImport');
+
         // Canvas Setup
         let width, height;
         function resizeCanvas() {
             width = canvas.width = canvas.parentElement.offsetWidth;
             height = canvas.height = canvas.parentElement.offsetHeight;
-            drawIdle(); // Redraw when resized
+            drawIdle();
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -349,9 +689,10 @@
         function updateBalance(amount) {
             balance += amount;
             balanceDisplay.textContent = `$${balance.toFixed(2)}`;
+            autoSave(); // Auto-save on balance change
         }
 
-        function showToast(msg, type = 'success') {
+        function showToastMessage(msg, type = 'success') {
             toastMessage.textContent = msg;
             toast.className = `toast show ${type}`;
             setTimeout(() => toast.classList.remove('show'), 3000);
@@ -364,7 +705,6 @@
             return Math.max(1.00, Math.floor((100 * e - h) / (e - h)) / 100);
         }
 
-        // Draw Functions
         function drawIdle() {
             ctx.clearRect(0, 0, width, height);
             ctx.strokeStyle = '#334155';
@@ -446,7 +786,6 @@
             }
         }
 
-        // Game Loop
         function gameLoop(timestamp) {
             if (!isPlaying) return;
 
@@ -463,7 +802,6 @@
 
             ctx.clearRect(0, 0, width, height);
             
-            // Grid
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 1;
             const offset = (elapsed * 50) % 100;
@@ -496,11 +834,11 @@
             const betAmount = parseFloat(betInput.value);
             
             if (isNaN(betAmount) || betAmount <= 0) {
-                showToast("Неверная сумма ставки", "error");
+                showToastMessage("Неверная сумма ставки", "error");
                 return;
             }
             if (betAmount > balance) {
-                showToast("Недостаточно средств", "error");
+                showToastMessage("Недостаточно средств", "error");
                 return;
             }
 
@@ -537,7 +875,7 @@
             statusMessage.style.opacity = '1';
             
             endGameUI();
-            showToast(`Победа! +$${winAmount.toFixed(2)}`);
+            showToastMessage(`Победа! +$${winAmount.toFixed(2)}`);
         }
 
         function crashGame() {
@@ -557,7 +895,7 @@
             drawExplosion(rocketX, rocketY);
 
             endGameUI();
-            showToast("Вы проиграли ставку", "error");
+            showToastMessage("Вы проиграли ставку", "error");
         }
 
         function endGameUI() {
@@ -579,15 +917,47 @@
             }
         }
 
-        // Event Listeners
+        // ==================== EVENT LISTENERS ====================
         betButton.addEventListener('click', startGame);
         cashoutButton.addEventListener('click', cashOut);
+
+        // Save System Events
+        saveButton.addEventListener('click', () => saveGame(true));
+        loadButton.addEventListener('click', loadGame);
+        exportButton.addEventListener('click', exportSave);
+        importButton.addEventListener('click', () => {
+            importModal.classList.add('active');
+            importData.value = '';
+        });
+        resetButton.addEventListener('click', resetGame);
+
+        cancelImport.addEventListener('click', () => {
+            importModal.classList.remove('active');
+        });
+
+        confirmImport.addEventListener('click', () => {
+            const code = importData.value.trim();
+            if (code) {
+                if (importSave(code)) {
+                    importModal.classList.remove('active');
+                }
+            } else {
+                showToastMessage('Введите код сохранения!', 'error');
+            }
+        });
+
+        // Close modal on overlay click
+        importModal.addEventListener('click', (e) => {
+            if (e.target === importModal) {
+                importModal.classList.remove('active');
+            }
+        });
 
         promoButton.addEventListener('click', () => {
             const code = promoInput.value.trim().toUpperCase();
             
             if (usedCodes.has(code)) {
-                showToast("Код уже использован", "error");
+                showToastMessage("Код уже использован", "error");
                 return;
             }
 
@@ -599,24 +969,42 @@
                 luckIndicator.style.display = 'block';
                 document.documentElement.style.setProperty('--primary', '#fbbf24');
                 logoElement.style.color = '#fbbf24';
-                showToast("🎉 ВИП БОНУС: +$1000 и УДАЧА x2!", "vip");
+                showToastMessage("🎉 ВИП БОНУС: +$1000 и УДАЧА x2!", "vip");
+                autoSave();
             } else if (code === 'DEP') {
                 updateBalance(10);
                 usedCodes.add(code);
                 promoInput.value = '';
-                showToast("+ $10");
+                showToastMessage("+ $10");
+                autoSave();
             } else if (code === 'ИГРА10') {
                 updateBalance(100);
                 usedCodes.add(code);
                 promoInput.value = '';
-                showToast("+ $100");
+                showToastMessage("+ $100");
+                autoSave();
             } else {
-                showToast("Неверный код", "error");
+                showToastMessage("Неверный код", "error");
             }
         });
 
-        // Initial Draw
-        drawIdle();
+        // ==================== INITIALIZATION ====================
+        // Try to load saved game on start
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem(SAVE_KEY);
+            if (saved) {
+                loadGame();
+                showToastMessage('Сохранение загружено!', 'save');
+            }
+            drawIdle();
+        });
+
+        // Auto-save every 30 seconds
+        setInterval(() => {
+            if (balance !== 100 || usedCodes.size > 0) {
+                saveGame(false);
+            }
+        }, 30000);
     </script>
 </body>
 </html>
