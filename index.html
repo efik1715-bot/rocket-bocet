@@ -241,7 +241,6 @@
             white-space: nowrap;
         }
 
-        /* Save System Panel */
         .save-panel {
             background: var(--bg-panel);
             padding: 1rem 1.5rem;
@@ -308,6 +307,17 @@
             background: #334155;
         }
 
+        .btn-help {
+            background: #6366f1;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-help:hover {
+            background: #4f46e5;
+        }
+
         .toast {
             position: fixed;
             top: 20px;
@@ -341,7 +351,6 @@
             border-left-color: #059669;
         }
 
-        /* Import Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -391,6 +400,40 @@
             display: flex;
             gap: 0.5rem;
             justify-content: flex-end;
+        }
+
+        /* Promo Codes List Modal */
+        .promo-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .promo-item {
+            background: #0f172a;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+        }
+
+        .promo-code {
+            font-family: monospace;
+            color: var(--vip-gold);
+            font-weight: bold;
+        }
+
+        .promo-reward {
+            color: var(--success);
+            font-size: 0.875rem;
+        }
+
+        .promo-used {
+            color: var(--text-muted);
+            font-size: 0.75rem;
         }
 
         @media (max-width: 768px) {
@@ -467,6 +510,7 @@
             <button class="btn btn-load" id="loadButton">📂 Загрузить</button>
             <button class="btn btn-export" id="exportButton">📤 Экспорт</button>
             <button class="btn btn-import" id="importButton">📥 Импорт</button>
+            <button class="btn btn-help" id="promoHelpButton">📋 Коды</button>
             <button class="btn btn-reset" id="resetButton">🗑️ Сброс</button>
         </div>
     </main>
@@ -475,17 +519,48 @@
         <span id="toastMessage">Успешно!</span>
     </div>
 
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <h3>📤 Экспорт сохранения</h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.875rem;">
+                Скопируйте этот код и сохраните в надёжном месте:
+            </p>
+            <textarea id="exportData" readonly></textarea>
+            <div class="modal-buttons">
+                <button class="btn btn-save" id="copyExport">📋 Копировать</button>
+                <button class="btn btn-reset" id="closeExport">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Import Modal -->
     <div class="modal-overlay" id="importModal">
         <div class="modal">
             <h3>📥 Импорт сохранения</h3>
             <p style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.875rem;">
-                Вставьте код сохранения, который вы получили при экспорте:
+                Вставьте код сохранения:
             </p>
             <textarea id="importData" placeholder="Вставьте код сохранения здесь..."></textarea>
             <div class="modal-buttons">
                 <button class="btn btn-reset" id="cancelImport">Отмена</button>
                 <button class="btn btn-load" id="confirmImport">Импортировать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promo Codes List Modal -->
+    <div class="modal-overlay" id="promoHelpModal">
+        <div class="modal">
+            <h3>📋 Список промокодов</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+                Активируйте коды в поле выше. Каждый код можно использовать только один раз!
+            </p>
+            <div class="promo-list" id="promoList">
+                <!-- Promo codes will be inserted here -->
+            </div>
+            <div class="modal-buttons" style="margin-top: 1rem;">
+                <button class="btn btn-reset" id="closePromoHelp">Закрыть</button>
             </div>
         </div>
     </div>
@@ -508,7 +583,6 @@
                 const saveData = getSaveData();
                 localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
                 
-                // Visual feedback
                 const saveIndicator = document.getElementById('saveIndicator');
                 const saveStatus = document.getElementById('saveStatus');
                 saveIndicator.classList.add('saved');
@@ -540,15 +614,12 @@
 
                 const data = JSON.parse(saved);
                 
-                // Restore data
                 balance = data.balance || 100;
                 usedCodes = new Set(data.usedCodes || []);
                 luckMultiplier = data.luckMultiplier || 1.0;
 
-                // Update UI
                 updateBalance(0);
                 
-                // Restore luck indicator if active
                 if (luckMultiplier > 1) {
                     luckIndicator.style.display = 'block';
                     document.documentElement.style.setProperty('--primary', '#fbbf24');
@@ -567,36 +638,34 @@
         function exportSave() {
             try {
                 const saveData = getSaveData();
-                const encoded = btoa(JSON.stringify(saveData));
+                const jsonString = JSON.stringify(saveData);
+                const encoded = encodeURIComponent(jsonString);
                 
-                // Copy to clipboard
-                navigator.clipboard.writeText(encoded).then(() => {
-                    showToastMessage('Код скопирован в буфер!', 'save');
-                }).catch(() => {
-                    // Fallback: show in prompt
-                    prompt('Скопируйте этот код сохранения:', encoded);
-                });
+                const exportModal = document.getElementById('exportModal');
+                const exportData = document.getElementById('exportData');
+                exportData.value = encoded;
+                exportModal.classList.add('active');
+                
+                showToastMessage('Код готов к копированию!', 'save');
             } catch (e) {
-                showToastMessage('Ошибка экспорта!', 'error');
+                console.error('Export error:', e);
+                showToastMessage('Ошибка экспорта: ' + e.message, 'error');
             }
         }
 
         function importSave(encodedData) {
             try {
-                const decoded = atob(encodedData);
+                const decoded = decodeURIComponent(encodedData);
                 const data = JSON.parse(decoded);
                 
-                // Validate data
                 if (!data.balance || !data.usedCodes) {
-                    throw new Error('Invalid save data');
+                    throw new Error('Неверный формат данных');
                 }
 
-                // Apply data
                 balance = data.balance;
                 usedCodes = new Set(data.usedCodes);
                 luckMultiplier = data.luckMultiplier || 1.0;
 
-                // Update UI
                 updateBalance(0);
                 
                 if (luckMultiplier > 1) {
@@ -605,7 +674,6 @@
                     logoElement.style.color = '#fbbf24';
                 }
 
-                // Auto-save after import
                 saveGame(false);
                 
                 showToastMessage('Прогресс импортирован!', 'save');
@@ -631,9 +699,73 @@
             }
         }
 
-        // Auto-save on important events
         function autoSave() {
             saveGame(false);
+        }
+
+        // ==================== PROMO CODES ====================
+        const PROMO_CODES = {
+            // 💰 Баланс - Маленькие
+            'СТАРТ': { reward: 50, type: 'balance', message: '+$50 на счёт!' },
+            'БОНУС5': { reward: 5, type: 'balance', message: '+$5 на счёт!' },
+            'БОНУС10': { reward: 10, type: 'balance', message: '+$10 на счёт!' },
+            'БОНУС25': { reward: 25, type: 'balance', message: '+$25 на счёт!' },
+            'БОНУС50': { reward: 50, type: 'balance', message: '+$50 на счёт!' },
+            'БОНУС100': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
+            'DEP': { reward: 10, type: 'balance', message: '+$10 на счёт!' },
+            'ИГРА10': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
+            
+            // 💰 Баланс - Большие
+            'МЕГА': { reward: 500, type: 'balance', message: '+$500 на счёт!' },
+            'СУПЕР': { reward: 750, type: 'balance', message: '+$750 на счёт!' },
+            'ВЫИГРЫШ10': { reward: 1000, type: 'balance', message: '+$1000 на счёт!' },
+            'ДЖЕКПОТ': { reward: 2500, type: 'balance', message: '+$2500 на счёт!' },
+            'ВИП2025': { reward: 5000, type: 'balance', message: '+$5000 на счёт!' },
+            
+            // 🍀 Удача (множитель)
+            'УДАЧА': { reward: 1.5, type: 'luck', message: 'Удача x1.5 на 1 раунд!' },
+            'ФАРТ': { reward: 2.0, type: 'luck', message: 'Удача x2 на 1 раунд!' },
+            'ЛЕГЕНДА': { reward: 3.0, type: 'luck', message: 'Удача x3 на 1 раунд!' },
+            'БОГ': { reward: 5.0, type: 'luck', message: 'Удача x5 на 1 раунд!' },
+            
+            // 🎁 Специальные
+            'ПОБЕДА': { reward: 200, type: 'balance', message: '+$200 на счёт!' },
+            'СЕКРЕТ': { reward: 150, type: 'balance', message: '+$150 на счёт!' },
+            'ПРИВЕТ': { reward: 75, type: 'balance', message: '+$75 на счёт!' },
+            'НОВИЧОК': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
+            'РАКЕТА': { reward: 300, type: 'balance', message: '+$300 на счёт!' },
+            'КОСМОС': { reward: 500, type: 'balance', message: '+$500 на счёт!' },
+            
+            // 🎉 Сезонные
+            '2025': { reward: 202.5, type: 'balance', message: '+$202.5 на счёт!' },
+            'WEEKEND': { reward: 150, type: 'balance', message: '+$150 на счёт!' },
+            'HAPPY': { reward: 100, type: 'balance', message: '+$100 на счёт!' }
+        };
+
+        function showPromoList() {
+            const modal = document.getElementById('promoHelpModal');
+            const list = document.getElementById('promoList');
+            
+            let html = '';
+            for (const [code, data] of Object.entries(PROMO_CODES)) {
+                const isUsed = usedCodes.has(code);
+                const rewardText = data.type === 'balance' 
+                    ? `+$${data.reward}` 
+                    : `Удача x${data.reward}`;
+                
+                html += `
+                    <div class="promo-item">
+                        <div>
+                            <div class="promo-code">${code}</div>
+                            <div class="promo-reward">${rewardText}</div>
+                        </div>
+                        <div class="promo-used">${isUsed ? '✅ Использован' : '⭕ Доступен'}</div>
+                    </div>
+                `;
+            }
+            
+            list.innerHTML = html;
+            modal.classList.add('active');
         }
 
         // ==================== GAME CODE ====================
@@ -671,10 +803,19 @@
         const exportButton = document.getElementById('exportButton');
         const importButton = document.getElementById('importButton');
         const resetButton = document.getElementById('resetButton');
+        const promoHelpButton = document.getElementById('promoHelpButton');
+        
+        // Modals
+        const exportModal = document.getElementById('exportModal');
         const importModal = document.getElementById('importModal');
+        const promoHelpModal = document.getElementById('promoHelpModal');
+        const exportData = document.getElementById('exportData');
         const importData = document.getElementById('importData');
+        const copyExport = document.getElementById('copyExport');
+        const closeExport = document.getElementById('closeExport');
         const cancelImport = document.getElementById('cancelImport');
         const confirmImport = document.getElementById('confirmImport');
+        const closePromoHelp = document.getElementById('closePromoHelp');
 
         // Canvas Setup
         let width, height;
@@ -689,7 +830,7 @@
         function updateBalance(amount) {
             balance += amount;
             balanceDisplay.textContent = `$${balance.toFixed(2)}`;
-            autoSave(); // Auto-save on balance change
+            autoSave();
         }
 
         function showToastMessage(msg, type = 'success') {
@@ -699,10 +840,21 @@
         }
 
         function generateCrashPoint() {
-            if (Math.random() < 0.03) return 1.00;
+            const MIN_CRASH = 1.20;
+            const MAX_CRASH = 1000000;
+            
+            if (Math.random() < 0.03) {
+                return MIN_CRASH + Math.random() * 0.30;
+            }
+            
             const e = 2 ** 32;
             const h = crypto.getRandomValues(new Uint32Array(1))[0];
-            return Math.max(1.00, Math.floor((100 * e - h) / (e - h)) / 100);
+            let crash = Math.floor((100 * e - h) / (e - h)) / 100;
+            
+            crash = Math.max(MIN_CRASH, crash);
+            crash = Math.min(MAX_CRASH, crash);
+            
+            return crash;
         }
 
         function drawIdle() {
@@ -848,6 +1000,7 @@
             isCrashed = false;
             multiplier = 1.00;
             crashPoint = generateCrashPoint();
+            
             startTime = performance.now();
 
             betButton.style.display = 'none';
@@ -930,7 +1083,20 @@
             importData.value = '';
         });
         resetButton.addEventListener('click', resetGame);
+        promoHelpButton.addEventListener('click', showPromoList);
 
+        // Export Modal Events
+        copyExport.addEventListener('click', () => {
+            exportData.select();
+            document.execCommand('copy');
+            showToastMessage('Код скопирован!', 'save');
+        });
+
+        closeExport.addEventListener('click', () => {
+            exportModal.classList.remove('active');
+        });
+
+        // Import Modal Events
         cancelImport.addEventListener('click', () => {
             importModal.classList.remove('active');
         });
@@ -946,50 +1112,68 @@
             }
         });
 
-        // Close modal on overlay click
+        // Promo Help Modal Events
+        closePromoHelp.addEventListener('click', () => {
+            promoHelpModal.classList.remove('active');
+        });
+
+        // Close modals on overlay click
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                exportModal.classList.remove('active');
+            }
+        });
+
         importModal.addEventListener('click', (e) => {
             if (e.target === importModal) {
                 importModal.classList.remove('active');
             }
         });
 
+        promoHelpModal.addEventListener('click', (e) => {
+            if (e.target === promoHelpModal) {
+                promoHelpModal.classList.remove('active');
+            }
+        });
+
+        // Promo Code Handler
         promoButton.addEventListener('click', () => {
             const code = promoInput.value.trim().toUpperCase();
             
+            if (!code) {
+                showToastMessage("Введите промокод", "error");
+                return;
+            }
+            
             if (usedCodes.has(code)) {
-                showToastMessage("Код уже использован", "error");
+                showToastMessage("Этот код уже был использован", "error");
                 return;
             }
 
-            if (code === 'ВЫИГРЫШ10') {
-                updateBalance(1000);
-                luckMultiplier = 2.0;
+            const promoData = PROMO_CODES[code];
+            
+            if (promoData) {
                 usedCodes.add(code);
                 promoInput.value = '';
-                luckIndicator.style.display = 'block';
-                document.documentElement.style.setProperty('--primary', '#fbbf24');
-                logoElement.style.color = '#fbbf24';
-                showToastMessage("🎉 ВИП БОНУС: +$1000 и УДАЧА x2!", "vip");
-                autoSave();
-            } else if (code === 'DEP') {
-                updateBalance(10);
-                usedCodes.add(code);
-                promoInput.value = '';
-                showToastMessage("+ $10");
-                autoSave();
-            } else if (code === 'ИГРА10') {
-                updateBalance(100);
-                usedCodes.add(code);
-                promoInput.value = '';
-                showToastMessage("+ $100");
+                
+                if (promoData.type === 'balance') {
+                    updateBalance(promoData.reward);
+                    showToastMessage(promoData.message, 'success');
+                } else if (promoData.type === 'luck') {
+                    luckMultiplier = promoData.reward;
+                    luckIndicator.style.display = 'block';
+                    document.documentElement.style.setProperty('--primary', '#fbbf24');
+                    logoElement.style.color = '#fbbf24';
+                    showToastMessage(promoData.message, 'vip');
+                }
+                
                 autoSave();
             } else {
-                showToastMessage("Неверный код", "error");
+                showToastMessage("Неверный промокод", "error");
             }
         });
 
         // ==================== INITIALIZATION ====================
-        // Try to load saved game on start
         window.addEventListener('load', () => {
             const saved = localStorage.getItem(SAVE_KEY);
             if (saved) {
@@ -999,7 +1183,6 @@
             drawIdle();
         });
 
-        // Auto-save every 30 seconds
         setInterval(() => {
             if (balance !== 100 || usedCodes.size > 0) {
                 saveGame(false);
