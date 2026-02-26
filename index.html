@@ -307,17 +307,6 @@
             background: #334155;
         }
 
-        .btn-help {
-            background: #6366f1;
-            color: white;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-        }
-
-        .btn-help:hover {
-            background: #4f46e5;
-        }
-
         .toast {
             position: fixed;
             top: 20px;
@@ -402,40 +391,6 @@
             justify-content: flex-end;
         }
 
-        /* Promo Codes List Modal */
-        .promo-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-top: 1rem;
-        }
-
-        .promo-item {
-            background: #0f172a;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #334155;
-        }
-
-        .promo-code {
-            font-family: monospace;
-            color: var(--vip-gold);
-            font-weight: bold;
-        }
-
-        .promo-reward {
-            color: var(--success);
-            font-size: 0.875rem;
-        }
-
-        .promo-used {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-        }
-
         @media (max-width: 768px) {
             .controls-area {
                 grid-template-columns: 1fr;
@@ -510,7 +465,6 @@
             <button class="btn btn-load" id="loadButton">📂 Загрузить</button>
             <button class="btn btn-export" id="exportButton">📤 Экспорт</button>
             <button class="btn btn-import" id="importButton">📥 Импорт</button>
-            <button class="btn btn-help" id="promoHelpButton">📋 Коды</button>
             <button class="btn btn-reset" id="resetButton">🗑️ Сброс</button>
         </div>
     </main>
@@ -545,22 +499,6 @@
             <div class="modal-buttons">
                 <button class="btn btn-reset" id="cancelImport">Отмена</button>
                 <button class="btn btn-load" id="confirmImport">Импортировать</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Promo Codes List Modal -->
-    <div class="modal-overlay" id="promoHelpModal">
-        <div class="modal">
-            <h3>📋 Список промокодов</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
-                Активируйте коды в поле выше. Каждый код можно использовать только один раз!
-            </p>
-            <div class="promo-list" id="promoList">
-                <!-- Promo codes will be inserted here -->
-            </div>
-            <div class="modal-buttons" style="margin-top: 1rem;">
-                <button class="btn btn-reset" id="closePromoHelp">Закрыть</button>
             </div>
         </div>
     </div>
@@ -742,32 +680,6 @@
             'HAPPY': { reward: 100, type: 'balance', message: '+$100 на счёт!' }
         };
 
-        function showPromoList() {
-            const modal = document.getElementById('promoHelpModal');
-            const list = document.getElementById('promoList');
-            
-            let html = '';
-            for (const [code, data] of Object.entries(PROMO_CODES)) {
-                const isUsed = usedCodes.has(code);
-                const rewardText = data.type === 'balance' 
-                    ? `+$${data.reward}` 
-                    : `Удача x${data.reward}`;
-                
-                html += `
-                    <div class="promo-item">
-                        <div>
-                            <div class="promo-code">${code}</div>
-                            <div class="promo-reward">${rewardText}</div>
-                        </div>
-                        <div class="promo-used">${isUsed ? '✅ Использован' : '⭕ Доступен'}</div>
-                    </div>
-                `;
-            }
-            
-            list.innerHTML = html;
-            modal.classList.add('active');
-        }
-
         // ==================== GAME CODE ====================
         let balance = 100.00;
         let currentBet = 0;
@@ -803,19 +715,16 @@
         const exportButton = document.getElementById('exportButton');
         const importButton = document.getElementById('importButton');
         const resetButton = document.getElementById('resetButton');
-        const promoHelpButton = document.getElementById('promoHelpButton');
         
         // Modals
         const exportModal = document.getElementById('exportModal');
         const importModal = document.getElementById('importModal');
-        const promoHelpModal = document.getElementById('promoHelpModal');
         const exportData = document.getElementById('exportData');
         const importData = document.getElementById('importData');
         const copyExport = document.getElementById('copyExport');
         const closeExport = document.getElementById('closeExport');
         const cancelImport = document.getElementById('cancelImport');
         const confirmImport = document.getElementById('confirmImport');
-        const closePromoHelp = document.getElementById('closePromoHelp');
 
         // Canvas Setup
         let width, height;
@@ -1083,7 +992,6 @@
             importData.value = '';
         });
         resetButton.addEventListener('click', resetGame);
-        promoHelpButton.addEventListener('click', showPromoList);
 
         // Export Modal Events
         copyExport.addEventListener('click', () => {
@@ -1112,11 +1020,6 @@
             }
         });
 
-        // Promo Help Modal Events
-        closePromoHelp.addEventListener('click', () => {
-            promoHelpModal.classList.remove('active');
-        });
-
         // Close modals on overlay click
         exportModal.addEventListener('click', (e) => {
             if (e.target === exportModal) {
@@ -1127,12 +1030,6 @@
         importModal.addEventListener('click', (e) => {
             if (e.target === importModal) {
                 importModal.classList.remove('active');
-            }
-        });
-
-        promoHelpModal.addEventListener('click', (e) => {
-            if (e.target === promoHelpModal) {
-                promoHelpModal.classList.remove('active');
             }
         });
 
