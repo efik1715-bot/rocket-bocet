@@ -748,19 +748,31 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
+        // ✅ НОВЫЙ АЛГОРИТМ - МОЖЕТ УЛЕТЕТЬ НА 1.01X
         function generateCrashPoint() {
-            const MIN_CRASH = 1.20;
-            const MAX_CRASH = 1000000;
+            const MIN_CRASH = 1.01;  // ✅ Теперь может быть 1.01x (мгновенный краш)
+            const MAX_CRASH = 1000000;  // Может достигать 1 000 000x+
             
-            if (Math.random() < 0.03) {
-                return MIN_CRASH + Math.random() * 0.30;
+            // 5% шанс на мгновенный краш (1.01x - 1.20x)
+            if (Math.random() < 0.05) {
+                return MIN_CRASH + Math.random() * 0.19;
             }
             
+            // 10% шанс на низкий краш (1.20x - 2.00x)
+            if (Math.random() < 0.10) {
+                return 1.20 + Math.random() * 0.80;
+            }
+            
+            // Остальные 85% - экспоненциальное распределение
+            // Даёт шанс на очень высокие множители
             const e = 2 ** 32;
             const h = crypto.getRandomValues(new Uint32Array(1))[0];
             let crash = Math.floor((100 * e - h) / (e - h)) / 100;
             
+            // Гарантируем минимум 1.01x
             crash = Math.max(MIN_CRASH, crash);
+            
+            // Ограничиваем максимум
             crash = Math.min(MAX_CRASH, crash);
             
             return crash;
@@ -909,6 +921,8 @@
             isCrashed = false;
             multiplier = 1.00;
             crashPoint = generateCrashPoint();
+            
+            console.log('Crash Point:', crashPoint);
             
             startTime = performance.now();
 
