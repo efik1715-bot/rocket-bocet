@@ -420,7 +420,7 @@
 <body>
 
     <header>
-        <div class="logo" id="logoElement">🚀 ROCKET BET</div>
+        <div class="logo" id="logoElement">ROCKET BET</div>
         <div class="header-right">
             <div class="balance-container">
                 <span>Баланс:</span>
@@ -673,6 +673,7 @@
             'НОВИЧОК': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
             'РАКЕТА': { reward: 300, type: 'balance', message: '+$300 на счёт!' },
             'КОСМОС': { reward: 500, type: 'balance', message: '+$500 на счёт!' },
+            '1200000 НА БАЛАНСЕ': { reward: 1200000, type: 'balance', message: '1200000 НА БАЛАНСЕ!' },
             
             // 🎉 Сезонные
             '2025': { reward: 202.5, type: 'balance', message: '+$202.5 на счёт!' },
@@ -748,18 +749,17 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ✅ НОВЫЙ АЛГОРИТМ - МОЖЕТ УЛЕТЕТЬ НА 1.01X
         function generateCrashPoint() {
-            const MIN_CRASH = 1.01;  // ✅ Теперь может быть 1.01x (мгновенный краш)
-            const MAX_CRASH = 1000000;  // Может достигать 1 000 000x+
+            const MIN_CRASH = 1.01;  
+            const MAX_CRASH = 1000000;  
             
             // 5% шанс на мгновенный краш (1.01x - 1.20x)
-            if (Math.random() < 0.05) {
+            if (Math.random() < 0.09) {
                 return MIN_CRASH + Math.random() * 0.19;
             }
             
             // 10% шанс на низкий краш (1.20x - 2.00x)
-            if (Math.random() < 0.10) {
+            if (Math.random() < 0.20) {
                 return 1.20 + Math.random() * 0.80;
             }
             
