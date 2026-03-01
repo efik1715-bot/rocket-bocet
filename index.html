@@ -17,6 +17,7 @@
             --text-muted: #94a3b8;
             --accent: #f59e0b;
             --vip-gold: #fbbf24;
+            --telegram: #229ED9;
         }
 
         * {
@@ -36,6 +37,101 @@
             overflow-x: hidden;
         }
 
+        /* ==================== TELEGRAM POPUP ==================== */
+        .telegram-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: linear-gradient(135deg, var(--bg-panel), #0f172a);
+            border: 2px solid var(--telegram);
+            border-radius: 1rem;
+            padding: 2rem;
+            z-index: 1000;
+            box-shadow: 0 0 50px rgba(34, 158, 217, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .telegram-popup.show {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .telegram-popup-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .telegram-popup-close:hover {
+            color: var(--danger);
+        }
+
+        .telegram-popup-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .telegram-popup h2 {
+            color: var(--telegram);
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .telegram-popup p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .telegram-popup-btn {
+            background: var(--telegram);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(34, 158, 217, 0.4);
+        }
+
+        .telegram-popup-btn:hover {
+            background: #1a8bb8;
+            transform: translateY(-2px);
+        }
+
+        .telegram-timer {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .telegram-timer span {
+            color: var(--telegram);
+            font-weight: bold;
+        }
+
+        /* ==================== HEADER ==================== */
         header {
             padding: 1rem 2rem;
             background: var(--bg-panel);
@@ -419,6 +515,16 @@
 </head>
 <body>
 
+    <!-- ==================== TELEGRAM POPUP ==================== -->
+    <div class="telegram-popup" id="telegramPopup">
+        <span class="telegram-popup-close" id="telegramPopupClose">&times;</span>
+        <div class="telegram-popup-icon">✈️</div>
+        <h2>Подпишись на Telegram!</h2>
+        <p>Там выходят новости, обновления и эксклюзивные промокоды!</p>
+        <a href="#" class="telegram-popup-btn" id="telegramPopupBtn" target="_blank">Подписаться</a>
+        <div class="telegram-timer">Исчезнет через <span id="telegramTimer">10</span> сек</div>
+    </div>
+
     <header>
         <div class="logo" id="logoElement">ROCKET BET</div>
         <div class="header-right">
@@ -504,6 +610,48 @@
     </div>
 
     <script>
+        // ==================== TELEGRAM POPUP ====================
+        // ⚠️ ВСТАВЬТЕ ССЫЛКУ НА СВОЙ КАНАЛ НИЖЕ (без пробелов!):
+        const telegramLink = "https://t.me/+LBYOwuhXqKVkZDYy";
+        
+        function showTelegramPopup() {
+            const popup = document.getElementById('telegramPopup');
+            const closeBtn = document.getElementById('telegramPopupClose');
+            const popupBtn = document.getElementById('telegramPopupBtn');
+            const timerSpan = document.getElementById('telegramTimer');
+            
+            popupBtn.href = telegramLink;
+            popup.style.display = 'flex';
+            
+            setTimeout(() => {
+                popup.classList.add('show');
+            }, 100);
+            
+            let timeLeft = 10;
+            const timer = setInterval(() => {
+                timeLeft--;
+                timerSpan.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    hidePopup();
+                }
+            }, 1000);
+            
+            closeBtn.addEventListener('click', hidePopup);
+            
+            function hidePopup() {
+                clearInterval(timer);
+                popup.classList.remove('show');
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 300);
+            }
+        }
+        
+        window.addEventListener('load', showTelegramPopup);
+        // =======================================================
+
         // ==================== SAVE SYSTEM ====================
         const SAVE_KEY = 'rocket_casino_save_v2';
         
@@ -643,7 +791,6 @@
 
         // ==================== PROMO CODES ====================
         const PROMO_CODES = {
-            // 💰 Баланс - Маленькие
             'СТАРТ': { reward: 50, type: 'balance', message: '+$50 на счёт!' },
             'БОНУС5': { reward: 5, type: 'balance', message: '+$5 на счёт!' },
             'БОНУС10': { reward: 10, type: 'balance', message: '+$10 на счёт!' },
@@ -652,31 +799,21 @@
             'БОНУС100': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
             'DEP': { reward: 10, type: 'balance', message: '+$10 на счёт!' },
             'ИГРА10': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
-            
-            // 💰 Баланс - Большие
             'МЕГА': { reward: 500, type: 'balance', message: '+$500 на счёт!' },
             'СУПЕР': { reward: 750, type: 'balance', message: '+$750 на счёт!' },
             'ВЫИГРЫШ10': { reward: 1000, type: 'balance', message: '+$1000 на счёт!' },
             'ДЖЕКПОТ': { reward: 2500, type: 'balance', message: '+$2500 на счёт!' },
             'ВИП2025': { reward: 5000, type: 'balance', message: '+$5000 на счёт!' },
-            
-            // 🍀 Удача (множитель)
             'УДАЧА': { reward: 1.5, type: 'luck', message: 'Удача x1.5 на 1 раунд!' },
             'ФАРТ': { reward: 2.0, type: 'luck', message: 'Удача x2 на 1 раунд!' },
             'ЛЕГЕНДА': { reward: 3.0, type: 'luck', message: 'Удача x3 на 1 раунд!' },
             'БОГ': { reward: 5.0, type: 'luck', message: 'Удача x5 на 1 раунд!' },
-            
-            // 🎁 Специальные
             'ПОБЕДА': { reward: 200, type: 'balance', message: '+$200 на счёт!' },
             'СЕКРЕТ': { reward: 150, type: 'balance', message: '+$150 на счёт!' },
             'ПРИВЕТ': { reward: 75, type: 'balance', message: '+$75 на счёт!' },
             'НОВИЧОК': { reward: 100, type: 'balance', message: '+$100 на счёт!' },
             'РАКЕТА': { reward: 300, type: 'balance', message: '+$300 на счёт!' },
             'КОСМОС': { reward: 500, type: 'balance', message: '+$500 на счёт!' },
-            '1200000 НА БАЛАНСЕ': { reward: 1200000, type: 'balance', message: '1200000 НА БАЛАНСЕ!' },
-            '22 МИЛЛИОНА ДОЛЛАРОВ ЗА 3 ГРЕБАНЫХ ЧАСА': { reward: 22000000, type: 'balance', message: 'Законно ли это?' },
-            
-            // 🎉 Сезонные
             '2025': { reward: 202.5, type: 'balance', message: '+$202.5 на счёт!' },
             'WEEKEND': { reward: 150, type: 'balance', message: '+$150 на счёт!' },
             'HAPPY': { reward: 100, type: 'balance', message: '+$100 на счёт!' }
@@ -695,7 +832,6 @@
         let usedCodes = new Set();
         let luckMultiplier = 1.0;
 
-        // DOM Elements
         const balanceDisplay = document.getElementById('balanceDisplay');
         const betInput = document.getElementById('betInput');
         const betButton = document.getElementById('betButton');
@@ -711,14 +847,12 @@
         const luckIndicator = document.getElementById('luckIndicator');
         const logoElement = document.getElementById('logoElement');
 
-        // Save System Buttons
         const saveButton = document.getElementById('saveButton');
         const loadButton = document.getElementById('loadButton');
         const exportButton = document.getElementById('exportButton');
         const importButton = document.getElementById('importButton');
         const resetButton = document.getElementById('resetButton');
         
-        // Modals
         const exportModal = document.getElementById('exportModal');
         const importModal = document.getElementById('importModal');
         const exportData = document.getElementById('exportData');
@@ -728,7 +862,6 @@
         const cancelImport = document.getElementById('cancelImport');
         const confirmImport = document.getElementById('confirmImport');
 
-        // Canvas Setup
         let width, height;
         function resizeCanvas() {
             width = canvas.width = canvas.parentElement.offsetWidth;
@@ -751,29 +884,22 @@
         }
 
         function generateCrashPoint() {
-            const MIN_CRASH = 1.01;  
-            const MAX_CRASH = 1000000;  
+            const MIN_CRASH = 1.01;
+            const MAX_CRASH = 1000000;
             
-            // 5% шанс на мгновенный краш (1.01x - 1.20x)
             if (Math.random() < 0.09) {
                 return MIN_CRASH + Math.random() * 0.19;
             }
             
-            // 10% шанс на низкий краш (1.20x - 2.00x)
             if (Math.random() < 0.20) {
                 return 1.20 + Math.random() * 0.80;
             }
             
-            // Остальные 85% - экспоненциальное распределение
-            // Даёт шанс на очень высокие множители
             const e = 2 ** 32;
             const h = crypto.getRandomValues(new Uint32Array(1))[0];
             let crash = Math.floor((100 * e - h) / (e - h)) / 100;
             
-            // Гарантируем минимум 1.01x
             crash = Math.max(MIN_CRASH, crash);
-            
-            // Ограничиваем максимум
             crash = Math.min(MAX_CRASH, crash);
             
             return crash;
@@ -923,8 +1049,6 @@
             multiplier = 1.00;
             crashPoint = generateCrashPoint();
             
-            console.log('Crash Point:', crashPoint);
-            
             startTime = performance.now();
 
             betButton.style.display = 'none';
@@ -994,11 +1118,9 @@
             }
         }
 
-        // ==================== EVENT LISTENERS ====================
         betButton.addEventListener('click', startGame);
         cashoutButton.addEventListener('click', cashOut);
 
-        // Save System Events
         saveButton.addEventListener('click', () => saveGame(true));
         loadButton.addEventListener('click', loadGame);
         exportButton.addEventListener('click', exportSave);
@@ -1008,7 +1130,6 @@
         });
         resetButton.addEventListener('click', resetGame);
 
-        // Export Modal Events
         copyExport.addEventListener('click', () => {
             exportData.select();
             document.execCommand('copy');
@@ -1019,7 +1140,6 @@
             exportModal.classList.remove('active');
         });
 
-        // Import Modal Events
         cancelImport.addEventListener('click', () => {
             importModal.classList.remove('active');
         });
@@ -1035,7 +1155,6 @@
             }
         });
 
-        // Close modals on overlay click
         exportModal.addEventListener('click', (e) => {
             if (e.target === exportModal) {
                 exportModal.classList.remove('active');
@@ -1048,7 +1167,6 @@
             }
         });
 
-        // Promo Code Handler
         promoButton.addEventListener('click', () => {
             const code = promoInput.value.trim().toUpperCase();
             
@@ -1085,7 +1203,6 @@
             }
         });
 
-        // ==================== INITIALIZATION ====================
         window.addEventListener('load', () => {
             const saved = localStorage.getItem(SAVE_KEY);
             if (saved) {
